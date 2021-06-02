@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+def help
+    puts "./iostat <interval in seconds> [device]"
+    puts "./iostat 1"
+    puts "./iostat 2 sdb"
+    exit -1
+end
+
+def main
+    _data_map = {}
+    help if ARGV.size == 0
+    _output = `iostat -mxy #{ARGV[1] ? "-p #{ARGV[1]}" : nil} #{ARGV.first} 1`
+    _f = false
+    _output.split("\n").each { |l|
+        if l =~ /Device/
+            _f = true
+            params = l.split(" ")
+            params.each { |k|
+                k.gsub!(':','') if k =~ /Device/
+                _data_map[k] = nil
+            }
+        elsif _f
+            _f = false
+            values = l.split(" ")
+            _data_map.keys.each_with_index { |k, i|
+                v = values[i]
+                if i == 0
+                    _data_map[k] = values[i]
+                else
+                    _data_map[k] = values[i].to_f
+                end
+            }
+        end
+    }
+    puts _data_map
+end
+
+main
